@@ -19,9 +19,9 @@ public class Lagari extends JavaPlugin implements Listener {
 	private static enum Modes { CLASSIC, CLASSIC_LEAVES, FULL, FULL_NOLEAVES };
 	private static final Vector<BlockFace> blockFaces = new Vector<BlockFace>(Arrays.
 			asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
+
 	private static final HashMap<BlockFace, String> blockFaceMap = new HashMap<BlockFace, String>();
 	private static final HashMap<Material, String> materialMap = new HashMap<Material, String>();
-	
 	static {
 		for (BlockFace m : BlockFace.values()) {
 			blockFaceMap.put(m, m.name());
@@ -52,7 +52,7 @@ public class Lagari extends JavaPlugin implements Listener {
 		reloadConfig();
 		FileConfiguration config = getConfig();
 		mode = Modes.valueOf(config.getString("mode"));
-		if (mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES && blockFaces.contains(BlockFace.DOWN)) {
+		if ((mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES) && blockFaces.contains(BlockFace.DOWN)) {
 			blockFaces.remove(BlockFace.DOWN);
 		} else if (! blockFaces.contains(BlockFace.DOWN)) {
 			blockFaces.add(BlockFace.DOWN);
@@ -101,7 +101,7 @@ public class Lagari extends JavaPlugin implements Listener {
 			m = b.getType();
 			if (logList.contains(m)) {
 				r.add(b);
-			} else if (mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL && leafList.contains(m)) {
+			} else if ((mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL) && leafList.contains(m)) {
 				r.add(b);
 			}
 			logger.info(face + " neighbor type: " + m);
@@ -115,7 +115,8 @@ public class Lagari extends JavaPlugin implements Listener {
 		LinkedList<Block> neighborBlocks = getNeighborBlocks(block);
 		
 		while (! neighborBlocks.isEmpty()) {
-			Block b = neighborBlocks.peek();
+//			logger.info("Neighbor list length: " + neighborBlocks.size());
+			Block b = neighborBlocks.removeFirst();
 			if (! b.isEmpty()) {
 				b.breakNaturally();
 				neighborBlocks.addAll(getNeighborBlocks(b));

@@ -6,7 +6,7 @@
 # FULL_NOLEAVES - Breaks all logs
 # ---------------------------------------------------------
 
-mode: CLASSIC
+mode: CLASSIC_LEAVES
 logs:
   - LOG #17
   - LOG_2 #162
@@ -19,3 +19,4 @@ tools:
   - STONE_AXE #275
   - DIAMOND_AXE #279
   - GOLD_AXE #286
+  
