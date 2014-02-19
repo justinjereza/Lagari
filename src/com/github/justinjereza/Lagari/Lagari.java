@@ -3,7 +3,7 @@ package com.github.justinjereza.Lagari;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.LinkedList;
-import java.util.HashMap;
+//import java.util.HashMap;
 import java.util.logging.Logger;
 
 import org.bukkit.Material;
@@ -19,7 +19,7 @@ public class Lagari extends JavaPlugin implements Listener {
 	private static enum Modes { CLASSIC, CLASSIC_LEAVES, FULL, FULL_NOLEAVES };
 	private static final Vector<BlockFace> blockFaces = new Vector<BlockFace>(Arrays.
 			asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
-
+/*
 	private static final HashMap<BlockFace, String> blockFaceMap = new HashMap<BlockFace, String>();
 	private static final HashMap<Material, String> materialMap = new HashMap<Material, String>();
 	static {
@@ -30,10 +30,11 @@ public class Lagari extends JavaPlugin implements Listener {
 			materialMap.put(m, m.name()); 
 		}
 	}
-	
+*/
 	private final Logger logger = getLogger();
 
 	private static Modes mode;
+	private static int leafLogDistance;
 	private static final Vector<Material> logList = new Vector<Material>();
 	private static final Vector<Material> leafList = new Vector<Material>();
 	private static final Vector<Material> toolList = new Vector<Material>();
@@ -54,10 +55,15 @@ public class Lagari extends JavaPlugin implements Listener {
 		mode = Modes.valueOf(config.getString("mode"));
 		if ((mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES) && blockFaces.contains(BlockFace.DOWN)) {
 			blockFaces.remove(BlockFace.DOWN);
-		} else if (! blockFaces.contains(BlockFace.DOWN)) {
+		} else if ((mode == Modes.FULL || mode == Modes.FULL_NOLEAVES) && ! blockFaces.contains(BlockFace.DOWN)) {
 			blockFaces.add(BlockFace.DOWN);
 		}
+		if (config.contains("leaf-log-distance")) {
+			leafLogDistance = config.getInt("leaf-log-distance");
+		}
+
 		logger.info("Mode: " + mode);
+		logger.info("Leaf-Log distance: " + leafLogDistance);
 		logger.info("Tool material: " + toolMaterial);
 		
 		Material m;
@@ -89,9 +95,23 @@ public class Lagari extends JavaPlugin implements Listener {
 		}
 	}
 	
-	public LinkedList<Block> getNeighborBlocks(Block block) {
-		LinkedList<Block> r = new LinkedList<Block>();
+	private boolean isInLogRange(Block block) {
+		boolean r = false;
 		
+		for (int i = 1; i <= leafLogDistance; i++) {
+			for (BlockFace face : blockFaces) {
+				r = logList.contains(block.getRelative(face, i).getType());
+				if (r) {
+					return r;
+				}
+			}
+		}
+		return r;
+	}
+
+	private LinkedList<Block> getNeighborBlocks(Block block) {
+		LinkedList<Block> r = new LinkedList<Block>();
+
 		Block b;
 		Material m;
 		logger.info("Block at " + block.getLocation());
@@ -99,9 +119,9 @@ public class Lagari extends JavaPlugin implements Listener {
 		for (BlockFace face : blockFaces) {
 			b = block.getRelative(face);
 			m = b.getType();
-			if (logList.contains(m)) {
-				r.add(b);
-			} else if ((mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL) && leafList.contains(m)) {
+			if (logList.contains(m) ||
+					mode == Modes.FULL && leafList.contains(m) ||
+					mode == Modes.CLASSIC_LEAVES && leafList.contains(m) && isInLogRange(b)) {
 				r.add(b);
 			}
 			logger.info(face + " neighbor type: " + m);
@@ -109,13 +129,13 @@ public class Lagari extends JavaPlugin implements Listener {
 		logger.info("-----");
 		return r;
 	}
-	
-	public void breakBlocks(Block block) {
+
+	private void breakBlocks(Block block) {
 		block.breakNaturally();
 		LinkedList<Block> neighborBlocks = getNeighborBlocks(block);
 		
 		while (! neighborBlocks.isEmpty()) {
-//			logger.info("Neighbor list length: " + neighborBlocks.size());
+//			logger.info("Neighbor list size: " + neighborBlocks.size());
 			Block b = neighborBlocks.removeFirst();
 			if (! b.isEmpty()) {
 				b.breakNaturally();
