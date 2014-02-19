@@ -1,0 +1,21 @@
+# ---------------------------------------------------------
+# mode:
+# CLASSIC - Break logs above the log you broke
+# CLASSIC_LEAVES - CLASSIC plus breaks all leaves
+# FULL - Breaks all logs and leaves
+# FULL_NOLEAVES - Breaks all logs
+# ---------------------------------------------------------
+
+mode: CLASSIC
+logs:
+  - LOG #17
+  - LOG_2 #162
+leaves:
+  - LEAVES #18
+  - LEAVES_2 #161
+tools:
+  - IRON_AXE #258
+  - WOOD_AXE #271
+  - STONE_AXE #275
+  - DIAMOND_AXE #279
+  - GOLD_AXE #286
