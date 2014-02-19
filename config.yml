@@ -11,7 +11,7 @@
 # distance of a log.
 # ---------------------------------------------------------
 
-mode: CLASSIC_LEAVES
+mode: FULL
 leaf-log-distance: 3
 logs:
   - LOG #17
