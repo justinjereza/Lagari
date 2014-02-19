@@ -1,7 +1,6 @@
 package com.github.justinjereza.Lagari;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Vector;
 import java.util.LinkedList;
 import java.util.HashMap;
@@ -18,8 +17,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 
 public class Lagari extends JavaPlugin implements Listener {
 	private static enum Modes { CLASSIC, CLASSIC_LEAVES, FULL, FULL_NOLEAVES };
-	private static final List<BlockFace> blockFaces = Arrays.
-			asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN);
+	private static final Vector<BlockFace> blockFaces = new Vector<BlockFace>(Arrays.
+			asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
 	private static final HashMap<BlockFace, String> blockFaceMap = new HashMap<BlockFace, String>();
 	private static final HashMap<Material, String> materialMap = new HashMap<Material, String>();
 	
@@ -59,28 +58,28 @@ public class Lagari extends JavaPlugin implements Listener {
 			blockFaces.add(BlockFace.DOWN);
 		}
 		logger.info("Mode: " + mode);
-		logger.info("Item material: " + materialMap.get(toolMaterial));
+		logger.info("Tool material: " + toolMaterial);
 		
 		Material m;
 		for (String s : config.getStringList("logs")) {
 			m = Material.valueOf(s);
 			if (! logList.contains(m)) {
 				logList.add(m);					
-				logger.info("Added log material: " + s + " #"+ m);
+				logger.info("Added log material: " + m);
 			}
 		}
 		for (String s : config.getStringList("leaves")) {
 			m = Material.valueOf(s);
 			if (! leafList.contains(m)) {					
 				leafList.add(m);
-				logger.info("Added leaf material: " + s + " #" + m);
+				logger.info("Added leaf material: " + m);
 			}
 		}
 		for (String s : config.getStringList("tools")) {
 			m = Material.valueOf(s);
 			if (! toolList.contains(m)) {
 				toolList.add(m);					
-				logger.info("Added tool material: " + s + " #" + m);
+				logger.info("Added tool material: " + m);
 			}
 		}
 
@@ -105,8 +104,9 @@ public class Lagari extends JavaPlugin implements Listener {
 			} else if (mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL && leafList.contains(m)) {
 				r.add(b);
 			}
-			logger.info(blockFaceMap.get(face) + " neighbor type: " + materialMap.get(m) + " #" + m);
+			logger.info(face + " neighbor type: " + m);
 		}
+		logger.info("-----");
 		return r;
 	}
 	
