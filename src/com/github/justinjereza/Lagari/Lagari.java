@@ -2,6 +2,7 @@ package com.github.justinjereza.Lagari;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -21,8 +22,6 @@ public class Lagari extends JavaPlugin implements Listener {
     // Vector of faces that will be checked.
     private static final Vector<BlockFace> blockFaces = new Vector<BlockFace>(Arrays.
             asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
-    // Vector of faces for that will be checked for BlockFace.DOWN. We store a reference copy here for blockFaceMap mode changes.
-    private static final Vector<BlockFace> downFaces = new Vector<BlockFace>(5);
     // Vector of faces that will be checked in diagonal cases.
     private static final Vector<BlockFace> horizontalFaces = new Vector<BlockFace>(Arrays.asList(BlockFace.UP, BlockFace.DOWN));
     // HashMap of faces that will be used in each direction traversed to prevent backtracking.
@@ -34,17 +33,11 @@ public class Lagari extends JavaPlugin implements Listener {
         for (BlockFace face : blockFaces) {
             v = new Vector<BlockFace>(blockFaces);
             v.remove(face.getOppositeFace());
-            if (face == BlockFace.DOWN) {
-                downFaces.addAll(v);
-                blockFaceMap.put(face, downFaces);
-            } else {
-                blockFaceMap.put(face, v);
-            }
+            blockFaceMap.put(face, v);
         }
     }
 
     private static Modes mode;
-    private static int leafLogDistance;
     private static final Vector<Material> logList = new Vector<Material>();
     private static final Vector<Material> leafList = new Vector<Material>();
     private static final Vector<Material> toolList = new Vector<Material>();
@@ -65,49 +58,25 @@ public class Lagari extends JavaPlugin implements Listener {
         FileConfiguration config = getConfig();
         mode = Modes.valueOf(config.getString("mode"));
 
-        if (config.contains("leaf-log-distance") && config.isInt("leaf-log-distance")) {
-            leafLogDistance = config.getInt("leaf-log-distance");
-        }
-
         logger.info("Mode: " + mode);
-        logger.info("Leaf-Log distance: " + leafLogDistance);
         logger.info("Tool material: " + toolMaterial);
 
-        if (mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES) {
-            if (blockFaces.contains(BlockFace.DOWN)) {
-                blockFaces.remove(BlockFace.DOWN);
-            }
-            if (horizontalFaces.contains(BlockFace.DOWN)) {
-                horizontalFaces.remove(BlockFace.DOWN);
-            }
-            if (blockFaceMap.containsKey(BlockFace.DOWN)) {
-                blockFaceMap.remove(BlockFace.DOWN);
-            }
-        } else {
-            if (! blockFaces.contains(BlockFace.DOWN)) {
-                blockFaces.add(BlockFace.DOWN);
-            }
-            if (! horizontalFaces.contains(BlockFace.DOWN)) {
-                horizontalFaces.add(BlockFace.DOWN);
-            }
-            if (! blockFaceMap.containsKey(BlockFace.DOWN)) {
-                blockFaceMap.put(BlockFace.DOWN, downFaces);
-            }
-        }
-
         Material m;
+        // Load valid log materials from configuration file.
         for (String s : config.getStringList("logs")) {
             m = Material.valueOf(s);
             if (! logList.contains(m)) {
                 logList.add(m);
             }
         }
+        // Load valid leaf materials from configuration file.
         for (String s : config.getStringList("leaves")) {
             m = Material.valueOf(s);
             if (! leafList.contains(m)) {
                 leafList.add(m);
             }
         }
+        // Load valid tool materials from configuration file.
         for (String s : config.getStringList("tools")) {
             m = Material.valueOf(s);
             if (! toolList.contains(m)) {
@@ -116,10 +85,15 @@ public class Lagari extends JavaPlugin implements Listener {
         }
 
         Block block = event.getBlock();
-        if (toolList.contains(toolMaterial) &&
-                logList.contains(block.getType()) &&
-                logList.contains(block.getRelative(BlockFace.UP).getType())) {
-            breakBlock(block, blockFaceMap.get(BlockFace.UP));
+        // Break blocks if current tool is valid and current block is a valid log material.
+        if (toolList.contains(toolMaterial) && logList.contains(block.getType())) {
+            Vector<BlockFace> faceMap;
+            if (mode == Modes.FULL || mode == Modes.FULL_NOLEAVES) {
+                faceMap = blockFaces;
+            } else {
+                faceMap = blockFaceMap.get(BlockFace.UP);
+            }
+            breakBlocks(new BlockQueueElement(block, faceMap));
         }
     }
 
@@ -128,23 +102,38 @@ public class Lagari extends JavaPlugin implements Listener {
         return logList.contains(m) || (mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL) && leafList.contains(m);
     }
 
-    private void breakBlock(Block block, Vector<BlockFace> blockFaces) {
-        Block b;
+    private void breakBlocks(BlockQueueElement blockQueueElement) {
+        int x = 0;
+        Block block, cardinalBlock, diagonalBlock;
+        LinkedList<BlockQueueElement> blockQueue = new LinkedList<BlockQueueElement>(Arrays.asList(blockQueueElement));
 
-        block.breakNaturally();
-        for (BlockFace i : blockFaces) {
-            b = block.getRelative(i);
-            if (isValidBlock(b)) {
-                breakBlock(b, blockFaceMap.get(i));
+        blockQueueElement.getBlock().breakNaturally();
+        while (! blockQueue.isEmpty()) {
+            if (blockQueue.size() > x) {
+                x = blockQueue.size();
             }
-            if (! horizontalFaces.contains(i)) {
-                for (BlockFace j : horizontalFaces) {
-                    b = b.getRelative(j);
-                    if (isValidBlock(b)) {
-                        breakBlock(b, blockFaceMap.get(j));
+            blockQueueElement = blockQueue.remove();
+            block = blockQueueElement.getBlock();
+            for (BlockFace i : blockQueueElement.getBlockFaces()) {
+                if (i != BlockFace.UP && (mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES)) {
+                    continue;
+                }
+                cardinalBlock = block.getRelative(i);
+                if (isValidBlock(cardinalBlock)) {
+                    cardinalBlock.breakNaturally();
+                    blockQueue.add(new BlockQueueElement(cardinalBlock, blockFaceMap.get(i)));
+                }
+                if (! horizontalFaces.contains(i)) {
+                    for (BlockFace j : horizontalFaces) {
+                        diagonalBlock = cardinalBlock.getRelative(j);
+                        if (isValidBlock(diagonalBlock)) {
+                            diagonalBlock.breakNaturally();
+                            blockQueue.add(new BlockQueueElement(diagonalBlock, blockFaceMap.get(j)));
+                        }
                     }
                 }
             }
         }
+        logger.info("Largest queue size: " + x);
     }
 }

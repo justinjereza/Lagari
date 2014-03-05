@@ -5,14 +5,8 @@
 # FULL - Breaks all logs and leaves
 # FULL_NOLEAVES - Breaks all logs
 # ---------------------------------------------------------
-# leaf-log-distance:
-# Must be an integer. Only used for CLASSIC_LEAVES.
-# Limits the leaves destroyed to be within a certain
-# distance of a log.
-# ---------------------------------------------------------
 
-mode: FULL
-leaf-log-distance: 3
+mode: CLASSIC
 logs:
   - LOG #17
   - LOG_2 #162
