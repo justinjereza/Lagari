@@ -1,3 +1,4 @@
 name: Lagari
 main: com.github.justinjereza.Lagari.Lagari
-version: 0.3.42
+version: 0.4.0
+api-version: 1.13

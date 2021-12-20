@@ -1,5 +1,6 @@
+*.sw[po]
 .classpath
 .project
 .settings
 *.jardesc
-bin
+target/
