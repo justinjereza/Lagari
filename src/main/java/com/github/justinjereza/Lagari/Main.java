@@ -13,6 +13,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
@@ -53,7 +54,8 @@ public class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     public void blockBreakHandler(BlockBreakEvent event) {
-        Material toolMaterial = event.getPlayer().getInventory().getItemInMainHand().getType();
+        ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
+        Material toolMaterial = tool.getType();
 
         reloadConfig();
         FileConfiguration config = getConfig();
@@ -96,7 +98,7 @@ public class Main extends JavaPlugin implements Listener {
             } else {
                 faceMap = blockFaceMap.get(BlockFace.UP);
             }
-            breakBlocks(new BlockQueueElement(block, faceMap));
+            breakBlocks(tool, new BlockQueueElement(block, faceMap));
         }
     }
 
@@ -105,14 +107,14 @@ public class Main extends JavaPlugin implements Listener {
         return logList.contains(m) || (mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL) && leafList.contains(m);
     }
 
-    private void breakBlocks(BlockQueueElement blockQueueElement) {
+    private void breakBlocks(ItemStack tool, BlockQueueElement blockQueueElement) {
         int x = 0;
         Block block, cardinalBlock, diagonalBlock;
         LinkedList<BlockQueueElement> blockQueue = new LinkedList<BlockQueueElement>(Arrays.asList(blockQueueElement));
 
-        blockQueueElement.getBlock().breakNaturally();
+        blockQueueElement.getBlock().breakNaturally(tool);
         while (! blockQueue.isEmpty()) {
-            if (blockQueue.size() > x) {
+            if (DEBUG && blockQueue.size() > x) {
                 x = blockQueue.size();
             }
             blockQueueElement = blockQueue.remove();
@@ -123,14 +125,14 @@ public class Main extends JavaPlugin implements Listener {
                 }
                 cardinalBlock = block.getRelative(i);
                 if (isValidBlock(cardinalBlock)) {
-                    cardinalBlock.breakNaturally();
+                    cardinalBlock.breakNaturally(tool);
                     blockQueue.add(new BlockQueueElement(cardinalBlock, blockFaceMap.get(i)));
                 }
                 if (! horizontalFaces.contains(i)) {
                     for (BlockFace j : horizontalFaces) {
                         diagonalBlock = cardinalBlock.getRelative(j);
                         if (isValidBlock(diagonalBlock)) {
-                            diagonalBlock.breakNaturally();
+                            diagonalBlock.breakNaturally(tool);
                             blockQueue.add(new BlockQueueElement(diagonalBlock, blockFaceMap.get(j)));
                         }
                     }
