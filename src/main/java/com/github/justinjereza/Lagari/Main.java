@@ -15,7 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class Lagari extends JavaPlugin implements Listener {
+public class Main extends JavaPlugin implements Listener {
+    private final boolean DEBUG = true;
     private final Logger logger = getLogger();
     private static enum Modes { CLASSIC, CLASSIC_LEAVES, FULL, FULL_NOLEAVES };
 
@@ -52,14 +53,16 @@ public class Lagari extends JavaPlugin implements Listener {
 
     @EventHandler
     public void blockBreakHandler(BlockBreakEvent event) {
-        Material toolMaterial = event.getPlayer().getItemInHand().getType();
+        Material toolMaterial = event.getPlayer().getInventory().getItemInMainHand().getType();
 
         reloadConfig();
         FileConfiguration config = getConfig();
         mode = Modes.valueOf(config.getString("mode"));
 
-        logger.info("Mode: " + mode);
-        logger.info("Tool material: " + toolMaterial);
+        if (DEBUG) {
+            logger.info("Mode: " + mode);
+            logger.info("Tool material: " + toolMaterial);
+        }
 
         Material m;
         // Load valid log materials from configuration file.
@@ -134,6 +137,8 @@ public class Lagari extends JavaPlugin implements Listener {
                 }
             }
         }
-        logger.info("Largest queue size: " + x);
+        if (DEBUG) {
+            logger.info("Largest queue size: " + x);
+        }
     }
 }
