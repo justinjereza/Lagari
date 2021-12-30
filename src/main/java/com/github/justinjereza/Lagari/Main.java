@@ -25,7 +25,7 @@ public class Main extends JavaPlugin implements Listener {
     private static final Vector<BlockFace> blockFaces = new Vector<BlockFace>(Arrays.
             asList(BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST, BlockFace.UP, BlockFace.DOWN));
     // Vector of faces that will be checked in diagonal cases.
-    private static final Vector<BlockFace> horizontalFaces = new Vector<BlockFace>(Arrays.asList(BlockFace.UP, BlockFace.DOWN));
+    private static final Vector<BlockFace> verticalFaces = new Vector<BlockFace>(Arrays.asList(BlockFace.UP, BlockFace.DOWN));
     // HashMap of faces that will be used in each direction traversed to prevent backtracking.
     private static final HashMap<BlockFace, Vector<BlockFace>> blockFaceMap = new HashMap<BlockFace, Vector<BlockFace>>(6);
 
@@ -40,6 +40,7 @@ public class Main extends JavaPlugin implements Listener {
     }
 
     private static Modes mode;
+    private static boolean enchantments;
     private static final Vector<Material> logList = new Vector<Material>();
     private static final Vector<Material> leafList = new Vector<Material>();
     private static final Vector<Material> toolList = new Vector<Material>();
@@ -60,9 +61,11 @@ public class Main extends JavaPlugin implements Listener {
         reloadConfig();
         FileConfiguration config = getConfig();
         mode = Modes.valueOf(config.getString("mode"));
+        enchantments = config.getBoolean("enchantments");
 
         if (DEBUG) {
             logger.info("Mode: " + mode);
+            logger.info("Enchantments: " + enchantments);
             logger.info("Tool material: " + toolMaterial);
         }
 
@@ -112,27 +115,44 @@ public class Main extends JavaPlugin implements Listener {
         Block block, cardinalBlock, diagonalBlock;
         LinkedList<BlockQueueElement> blockQueue = new LinkedList<BlockQueueElement>(Arrays.asList(blockQueueElement));
 
-        blockQueueElement.getBlock().breakNaturally(tool);
+        if (enchantments) {
+            blockQueueElement.getBlock().breakNaturally(tool);
+        } else {
+            blockQueueElement.getBlock().breakNaturally();
+        }
+
         while (! blockQueue.isEmpty()) {
             if (DEBUG && blockQueue.size() > x) {
                 x = blockQueue.size();
             }
+
             blockQueueElement = blockQueue.remove();
             block = blockQueueElement.getBlock();
             for (BlockFace i : blockQueueElement.getBlockFaces()) {
                 if (i != BlockFace.UP && (mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES)) {
                     continue;
                 }
+
                 cardinalBlock = block.getRelative(i);
+
                 if (isValidBlock(cardinalBlock)) {
-                    cardinalBlock.breakNaturally(tool);
+                    if (enchantments) {
+                        cardinalBlock.breakNaturally(tool);
+                    } else {
+                        cardinalBlock.breakNaturally();
+                    }
                     blockQueue.add(new BlockQueueElement(cardinalBlock, blockFaceMap.get(i)));
                 }
-                if (! horizontalFaces.contains(i)) {
-                    for (BlockFace j : horizontalFaces) {
+
+                if (! verticalFaces.contains(i)) {
+                    for (BlockFace j : verticalFaces) {
                         diagonalBlock = cardinalBlock.getRelative(j);
                         if (isValidBlock(diagonalBlock)) {
-                            diagonalBlock.breakNaturally(tool);
+                            if (enchantments) {
+                                diagonalBlock.breakNaturally(tool);
+                            } else {
+                                diagonalBlock.breakNaturally();
+                            }
                             blockQueue.add(new BlockQueueElement(diagonalBlock, blockFaceMap.get(j)));
                         }
                     }

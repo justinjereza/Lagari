@@ -1,12 +1,17 @@
 # ---------------------------------------------------------
 # mode:
-# CLASSIC - Break logs above the log you broke
-# CLASSIC_LEAVES - CLASSIC plus breaks all leaves
-# FULL - Breaks all logs and leaves
-# FULL_NOLEAVES - Breaks all logs
+# CLASSIC         - Break logs above the log you broke
+# CLASSIC_LEAVES  - CLASSIC plus breaks all leaves
+# FULL            - Breaks all logs and leaves
+# FULL_NOLEAVES   - Breaks all logs
+# ---------------------------------------------------------
+# enchantments:
+# false - Tool enchantments don't affect broken blocks
+# true  - Tool enchantments affect broken blocks
 # ---------------------------------------------------------
 
 mode: CLASSIC
+enchantments: false
 logs:
 - ACACIA_LOG
 - BIRCH_LOG
