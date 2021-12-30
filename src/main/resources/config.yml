@@ -10,7 +10,7 @@
 # true  - Tool enchantments affect broken blocks
 # ---------------------------------------------------------
 
-mode: CLASSIC
+mode: FULL
 enchantments: false
 logs:
 - ACACIA_LOG
