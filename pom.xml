@@ -6,7 +6,7 @@
 
   <groupId>com.github.justinjereza</groupId>
   <artifactId>Lagari</artifactId>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.3-SNAPSHOT</version>
 
   <name>Lagari</name>
   <url>https://github.com/justinjereza/Lagari</url>
@@ -21,7 +21,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.18.1-R0.1-SNAPSHOT</version>
+      <version>[1.13,)</version>
     </dependency>
   </dependencies>
 

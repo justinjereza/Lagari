@@ -16,8 +16,10 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/** Lagari - A Minecraft plugin for breaking adjacent blocks. */
 public class Main extends JavaPlugin implements Listener {
-    private final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
+
     private final Logger logger = getLogger();
     private static enum Modes { CLASSIC, CLASSIC_LEAVES, FULL, FULL_NOLEAVES };
 
@@ -29,11 +31,13 @@ public class Main extends JavaPlugin implements Listener {
     // HashMap of faces that will be used in each direction traversed to prevent backtracking.
     private static final HashMap<BlockFace, Vector<BlockFace>> blockFaceMap = new HashMap<BlockFace, Vector<BlockFace>>(6);
 
-    // Initialize blockFaceMap and downFaces.
+    // Initialize blockFaceMap from which we select which faces will get checked in a certain direction.
     static {
         Vector<BlockFace> v;
         for (BlockFace face : blockFaces) {
             v = new Vector<BlockFace>(blockFaces);
+            // Remove the face opposite the face we're currently making a map
+            // for so that it doesn't get checked which removes backtracking.
             v.remove(face.getOppositeFace());
             blockFaceMap.put(face, v);
         }
@@ -45,14 +49,17 @@ public class Main extends JavaPlugin implements Listener {
     private static final Vector<Material> leafList = new Vector<Material>();
     private static final Vector<Material> toolList = new Vector<Material>();
 
+    /** Initializes the plugin when it is enabled. */
     @Override
     public void onEnable() {
-        getConfig().options().copyDefaults(true);
-        saveConfig();
-        logger.info("Configuration file loaded.");
+        saveResource("config.yml", false);
         getServer().getPluginManager().registerEvents(this, this);
     }
 
+    /**
+     * Event handler for when a block is broken.
+     * @param event The dispatched event for when a block is broken.
+     */
     @EventHandler
     public void blockBreakHandler(BlockBreakEvent event) {
         ItemStack tool = event.getPlayer().getInventory().getItemInMainHand();
@@ -96,6 +103,7 @@ public class Main extends JavaPlugin implements Listener {
         // Break blocks if current tool is valid and current block is a valid log material.
         if (toolList.contains(toolMaterial) && logList.contains(block.getType())) {
             Vector<BlockFace> faceMap;
+            // With full modes, check all faces of the initial block. Otherwise, don't check it downwards.
             if (mode == Modes.FULL || mode == Modes.FULL_NOLEAVES) {
                 faceMap = blockFaces;
             } else {
@@ -110,55 +118,66 @@ public class Main extends JavaPlugin implements Listener {
         return logList.contains(m) || (mode == Modes.CLASSIC_LEAVES || mode == Modes.FULL) && leafList.contains(m);
     }
 
+    private void breakBlock(ItemStack t, Block b) {
+        if (enchantments) {
+            b.breakNaturally(t);
+        } else {
+            b.breakNaturally();
+        }
+    }
+
     private void breakBlocks(ItemStack tool, BlockQueueElement blockQueueElement) {
         int x = 0;
         Block block, cardinalBlock, diagonalBlock;
         LinkedList<BlockQueueElement> blockQueue = new LinkedList<BlockQueueElement>(Arrays.asList(blockQueueElement));
 
-        if (enchantments) {
-            blockQueueElement.getBlock().breakNaturally(tool);
-        } else {
-            blockQueueElement.getBlock().breakNaturally();
-        }
+        // Break the first block.
+        breakBlock(tool, blockQueueElement.getBlock());
 
+        // We've broken the first block but it is still in the queue so the loop starts executing.
         while (! blockQueue.isEmpty()) {
             if (DEBUG && blockQueue.size() > x) {
                 x = blockQueue.size();
             }
 
+            // Remove the first element of the queue and get its block.
             blockQueueElement = blockQueue.remove();
             block = blockQueueElement.getBlock();
+
+            // Iterate through each face of the current block.
             for (BlockFace i : blockQueueElement.getBlockFaces()) {
+                // Classic modes only break blocks upwards.
                 if (i != BlockFace.UP && (mode == Modes.CLASSIC || mode == Modes.CLASSIC_LEAVES)) {
                     continue;
                 }
 
+                // Get the block adjacent to the current face.
                 cardinalBlock = block.getRelative(i);
 
                 if (isValidBlock(cardinalBlock)) {
-                    if (enchantments) {
-                        cardinalBlock.breakNaturally(tool);
-                    } else {
-                        cardinalBlock.breakNaturally();
-                    }
+                    breakBlock(tool, cardinalBlock);
+                    // Add the adjacent block to the queue for processing and select
+                    // the face map that doesn't backtrack through the current face.
                     blockQueue.add(new BlockQueueElement(cardinalBlock, blockFaceMap.get(i)));
                 }
 
+                // If we're not checking a face that is above or below the current block,
+                // check the top and bottom of the adjacent block for blocks that can be broken.
                 if (! verticalFaces.contains(i)) {
                     for (BlockFace j : verticalFaces) {
+                        // Get the block above or below the adjacent block.
                         diagonalBlock = cardinalBlock.getRelative(j);
                         if (isValidBlock(diagonalBlock)) {
-                            if (enchantments) {
-                                diagonalBlock.breakNaturally(tool);
-                            } else {
-                                diagonalBlock.breakNaturally();
-                            }
+                            breakBlock(tool, diagonalBlock);
+                            // As with the blocks immediately adjacent to the current face,
+                            // add the block to the queue for processing.
                             blockQueue.add(new BlockQueueElement(diagonalBlock, blockFaceMap.get(j)));
                         }
                     }
                 }
             }
         }
+
         if (DEBUG) {
             logger.info("Largest queue size: " + x);
         }
