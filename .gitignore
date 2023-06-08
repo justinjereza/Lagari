@@ -3,4 +3,9 @@
 .project
 .settings
 *.jardesc
+.m2/
+doc/
+spigotmc/
+spigotmc-data/
 target/
+Lagari-*.jar
