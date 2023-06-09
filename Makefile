@@ -21,11 +21,11 @@ SPIGOTMC_DATA=spigotmc-data
 
 PODMAN_OPTIONS=--rm --security-opt label=disable --volume "$(CURDIR):$(PROJECT_ROOT)"
 
-.PHONY: all run clean distclean image spigotmc
+.PHONY: all run clean distclean image
 
 all: $(JAR)
 
-$(JAR): spigotmc
+$(JAR): | spigotmc
 	mkdir -p .m2
 	$(PODMAN) run $(PODMAN_OPTIONS) --volume "$(CURDIR)/.m2:$(M2_ROOT)" --workdir $(PROJECT_ROOT) $(IMAGE) \
 		$(MVN) install:install-file -Dfile=$(SPIGOTMC_API_JAR)
@@ -40,7 +40,7 @@ run: $(JAR)
 		--volume "$(CURDIR)/$(SPIGOTMC_DATA):$(PROJECT_ROOT)/$(SPIGOTMC_DATA)" --workdir $(PROJECT_ROOT)/$(SPIGOTMC_DATA) $(IMAGE) \
 		java -jar $(SPIGOTMC_JAR)
 
-doc: spigotmc
+doc: | spigotmc
 	mkdir -p $@
 	$(PODMAN) run $(PODMAN_OPTIONS) --workdir $(PROJECT_ROOT)/$@ $(IMAGE) \
 		javadoc -classpath $(SPIGOTMC_API_JAR) -sourcepath $(PROJECT_ROOT)/src/main/java com.github.justinjereza.Lagari
