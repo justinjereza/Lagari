@@ -36,7 +36,7 @@ If that happens run `make distclean` before running `make` again.
 Running a SpigotMC Server
 -------------------------
 
-The container image that is built is primarily used as a Java build environment but it can also be used to run a SpigotMC server with the Lagari plugin automatically installed using `make run`. By default, the server data is stored in `spigotmc-data`. The data location can be changed with `SPIGOTMC_DATA=mydata make --environment-overrides run`. The server data is not removed by `make distclean`.
+The container image that is built is primarily used as a Java build environment but it can also be used to run a SpigotMC server with the Lagari plugin automatically installed using `make run`. By default, the server data is stored in `spigotmc-data`. The data location can be changed with `make SPIGOTMC_DATA=mydata run`. The server data is not removed by `make distclean`.
 
 The server console can be attached with `podman attach spigotmc` and the container is removed when the server is stopped.
 

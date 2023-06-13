@@ -1,25 +1,25 @@
-PROJECT=Lagari
-VERSION=1.0.3
-PROJECT_ROOT=/root/$(PROJECT)
-JAR=$(PROJECT)-$(VERSION).jar
-SNAPSHOT_JAR=target/$(PROJECT)-$(VERSION)-SNAPSHOT.jar
+PROJECT = Lagari
+VERSION = 1.0.3
+PROJECT_ROOT = /root/$(PROJECT)
+JAR = $(PROJECT)-$(VERSION).jar
+SNAPSHOT_JAR = target/$(PROJECT)-$(VERSION)-SNAPSHOT.jar
 
-PODMAN=podman
-IMAGE=localhost/openjdk17:alpine
+PODMAN ?= podman
+IMAGE ?= localhost/openjdk17:alpine
 
-M2_ROOT=/root/.m2
-MVN=sh $(SPIGOTMC_ROOT)/apache-maven-3.6.0/bin/mvn
+M2_ROOT = /root/.m2
+MVN = sh $(SPIGOTMC_ROOT)/apache-maven-3.6.0/bin/mvn
 
-SPIGOTMC_VERSION=1.20
-SPIGOTMC_ROOT=$(PROJECT_ROOT)/spigotmc
-SPIGOTMC_JAR=$(SPIGOTMC_ROOT)/spigot-$(SPIGOTMC_VERSION).jar
-SPIGOTMC_API_JAR=$(SPIGOTMC_ROOT)/Spigot/Spigot-API/target/spigot-api-$(SPIGOTMC_VERSION)-R0.1-SNAPSHOT-shaded.jar
-BUILDTOOLS_URL=https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
+SPIGOTMC_VERSION ?= 1.20
+SPIGOTMC_ROOT = $(PROJECT_ROOT)/spigotmc
+SPIGOTMC_JAR = $(SPIGOTMC_ROOT)/spigot-$(SPIGOTMC_VERSION).jar
+SPIGOTMC_API_JAR = $(SPIGOTMC_ROOT)/Spigot/Spigot-API/target/spigot-api-$(SPIGOTMC_VERSION)-R0.1-SNAPSHOT-shaded.jar
+BUILDTOOLS_URL = https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
 
-SPIGOTMC_NAME=spigotmc
-SPIGOTMC_DATA=spigotmc-data
+SPIGOTMC_NAME ?= spigotmc
+SPIGOTMC_DATA ?= spigotmc-data
 
-PODMAN_OPTIONS=--rm --security-opt label=disable --volume "$(CURDIR):$(PROJECT_ROOT)"
+PODMAN_OPTIONS = --rm --security-opt label=disable --volume "$(CURDIR):$(PROJECT_ROOT)"
 
 .PHONY: all run clean distclean image
 
@@ -47,10 +47,10 @@ doc: | spigotmc
 
 clean:
 	-$(PODMAN) image exists $(IMAGE) && $(PODMAN) run $(PODMAN_OPTIONS) --workdir $(PROJECT_ROOT) $(IMAGE) $(MVN) clean
-	rm -rf $(JAR) $(SPIGOTMC_DATA)/plugins/$(JAR)
+	$(RM) -r $(JAR) $(SPIGOTMC_DATA)/plugins/$(JAR)
 
 distclean: clean
-	rm -rf .m2 doc spigotmc
+	$(RM) -r .m2 doc spigotmc
 	$(PODMAN) image rm $(IMAGE)
 
 image:
